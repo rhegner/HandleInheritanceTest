@@ -15,7 +15,7 @@ namespace HandleInheritanceTest
 			try
 			{
 				if (args.Length < 3)
-					throw new Exception("Please provide at least three arguments: Role [Parent|Child], Port, Mode [NoFix]");
+					throw new Exception("Please provide at least three arguments: Role [Parent|Child], Port, Mode [NoFix|CloseInheritedSockets]");
 
 				var role = args[0];
 				if (role != "Parent" && role != "Child")
@@ -24,8 +24,8 @@ namespace HandleInheritanceTest
 				var port = int.Parse(args[1]);
 
 				var mode = args[2];
-				if (mode != "NoFix")
-					throw new Exception("Mode must be NoFix");
+				if (mode != "NoFix" && mode != "CloseInheritedSockets")
+					throw new Exception("Mode must be NoFix or CloseInheritedSockets");
 
 				int parentPid = 0;
 				if (role == "Child")
@@ -47,6 +47,16 @@ namespace HandleInheritanceTest
 
 				if (role == "Child")
 				{
+					if (mode == "CloseInheritedSockets")
+					{
+						LogInfo(role, $"Closing inherited sockets...");
+						LogInfo(role, $"This fix does not work yet. Listing all open handles with name and type instead:");
+						var handles = Fixes.HandlersUtils.GetSystemHandles();
+						foreach (var h in handles)
+							LogInfo(role, $"{h.Type} - {h.Name}");
+						LogInfo(role, "End of List!");
+					}
+
 					LogInfo(role, $"Waiting for parent process to exit...");
 					using (var process = Process.GetProcessById(parentPid))
 					{
