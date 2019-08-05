@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "HandleInheritanceTest": {
+      "commandName": "Project",
+      "commandLineArgs": "Parent 5000 NoFix",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "http://localhost:5000"
+    }
+  }
+}
