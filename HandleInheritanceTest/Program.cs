@@ -15,7 +15,7 @@ namespace HandleInheritanceTest
 			try
 			{
 				if (args.Length < 3)
-					throw new Exception("Please provide at least three arguments: Role [Parent|Child], Port, Mode [NoFix|CloseInheritedSockets]");
+					throw new Exception("Please provide at least three arguments: Role [Parent|Child], Port, Mode [NoFix|CloseInheritedSockets|StartWithoutInheritance]");
 
 				var role = args[0];
 				if (role != "Parent" && role != "Child")
@@ -24,8 +24,8 @@ namespace HandleInheritanceTest
 				var port = int.Parse(args[1]);
 
 				var mode = args[2];
-				if (mode != "NoFix" && mode != "CloseInheritedSockets")
-					throw new Exception("Mode must be NoFix or CloseInheritedSockets");
+				if (mode != "NoFix" && mode != "CloseInheritedSockets" && mode != "StartWithoutInheritance")
+					throw new Exception("Mode must be NoFix or CloseInheritedSockets or StartWithoutInheritance");
 
 				int parentPid = 0;
 				if (role == "Child")
@@ -83,21 +83,28 @@ namespace HandleInheritanceTest
 
 					LogInfo(role, "Starting child process...");
 					var arguments = $"\"{binPath}\" Child {port} {mode} {pid}";
-					using (var process = Process.Start("dotnet", arguments)) { }
 
-					LogInfo(role, "Shutting down web host...");
-					webHostCts.Cancel();
-					await webHostTask;
-
-					LogInfo(role, "Waiting for 5 seconds...");
-					await Task.Delay(TimeSpan.FromSeconds(5));
+					if (mode == "StartWithoutInheritance")
+					{
+						Fixes.ProcessUtils.StartProcess("dotnet", arguments, inheritHandles: false);
+					}
+					else
+					{
+						using (var process = Process.Start("dotnet", arguments)) { }
+					}
 				}
 				else
 				{
-					await webHostTask;
+					LogInfo(role, "Waiting for 20 seconds...");
+					await Task.Delay(TimeSpan.FromSeconds(20));
 				}
 
+				LogInfo(role, "Shutting down web host...");
+				webHostCts.Cancel();
+				await webHostTask;
 
+				LogInfo(role, "Waiting for 5 seconds...");
+				await Task.Delay(TimeSpan.FromSeconds(5));
 			}
 			catch (Exception ex)
 			{
